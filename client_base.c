@@ -38,14 +38,11 @@
 *               read, write, close.
 */
 
-#define DATA "Dummy message from tutclient to the tutserver using tcp"
+#define DATA "hahahaha++++++++++++++++++++++++++++++++++"
 
-main(argc,argv)
-        int argc;
-        char *argv[];                   /* argv[0] pointer to program name
-                                           argv[1] pointer to server name
-                                           argv[2] pointer to tcp port number*/
-{
+		char local_filename[20];  /* save the local_file_name which is input by user  */ 
+		char remote_filename[20]; /* save the remote_file_name which is input bu user */ 
+		
         int sock2, msgsock;             /* socket descriptor */
         struct sockaddr_in server2;     /* structure used to assign a name
                                    to a socket sccording internet format*/
@@ -56,6 +53,16 @@ main(argc,argv)
         char buf[128];         /* message buffer*/ 
         int rval;               /* status code for read */
         int n, i;               /* temporary */
+
+        int argc;
+        char *argv[];                   /* argv[0] pointer to program name
+                                           argv[1] pointer to server name
+                                           argv[2] pointer to tcp port number*/
+main(argc,argv)
+
+{
+
+
 /*
 *       1. Validation of the parameters read on the command line
 */
@@ -99,26 +106,50 @@ main(argc,argv)
         server2.sin_port = htons(atoi(argv[2]));  /* char port # ==>integer port #
                                                      ====> network 16 bits format */
         server2.sin_addr = * ((struct in_addr *) hpstruct.h_addr);
-
-/*      5. Try a connection with the server
+		getConnetion();
+/*
+*       6. Transmit 10 messages to the server and 
+*       receive an ackknowledge from the server each time.
 */
+		inputFileName();
+        for (i=0; i<10; i++)
+         {
+                //   sleep(1);               /* zzzz: wait 1 second (option) */
+				printf("%s --> %s",local_filename,remote_filename) ;
+                if(write(sock2, DATA, strlen(DATA)) < 0)
+                        perror("Error in the transmission of message");
+                else { 
+                        /*  read a message from the server */
+                        if ((rval = read(sock2, buf, 1024)) < 0)
+                           perror("Error in reading a message");
+                        if (rval == 0)
+                           printf("End of connection\n");
+                        else
+                        {
+                           buf[rval]='\0';
+                           printf("===>%s\n", buf);
+                        }
+                     }
+         }
+
+        close(sock2);
+        puts("End of client program");
+        return 0;;        /* end of client program */
+}
+
+void inputFileName(){
+		printf("myftp> ");
+		scanf("put %s",local_filename);
+		scanf("%s",remote_filename);    
+}
+void getConnction(){
+		
+		/*      5. Try a connection with the server
+		*/
         if (connect(sock2, (struct sockaddr *)&server2, sizeof(server2)) < 0)
         {
                 perror("Error at connect time");
                 return 0;
         }
 
-/*
-*       6. Transmit 10 messages to the server and 
-*       receive an ackknowledge from the server each time.
-*/
-        for (i=0; i<10; i++)
-         {
-                //   sleep(1);               /* zzzz: wait 1 second (option) */
-				
-         }
-
-        close(sock2);
-        puts("End of client program");
-        return 0;;        /* end of client program */
 }
