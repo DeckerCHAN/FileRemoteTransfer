@@ -52,13 +52,6 @@
         struct hostent hpstruct; /* structure to access the server address*/
         char buf[128];         /* message buffer*/ 
         int rval;               /* status code for read */
-        int n, i;               /* temporary */
-
-     //   int argc;
-     //   char *argv[];                   /* argv[0] pointer to program name
-       //                                    argv[1] pointer to server name
-         //                                  argv[2] pointer to tcp port number*/
-										   
 
 int inputFileName(){
 		printf("myftp> ");
@@ -135,7 +128,7 @@ int transferFileName(){
 }
 int save(){
 
-
+		int i ;
         for (i=0; i<10; i++)
          {
                 //   sleep(1);               /* zzzz: wait 1 second (option) */
