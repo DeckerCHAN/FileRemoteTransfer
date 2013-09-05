@@ -54,46 +54,21 @@
         int rval;               /* status code for read */
         int n, i;               /* temporary */
 
-        int argc;
-        char *argv[];                   /* argv[0] pointer to program name
-                                           argv[1] pointer to server name
-                                           argv[2] pointer to tcp port number*/
+     //   int argc;
+     //   char *argv[];                   /* argv[0] pointer to program name
+       //                                    argv[1] pointer to server name
+         //                                  argv[2] pointer to tcp port number*/
 										   
-int main(argc,argv)
 
-{
-		if( !getSocketBase() ){
-			return 0 ;
-		}
-		if( !getConnetion() ){
-			return 0 ;
-		}
-		if( !inputFileName() ){
-			return 0 ;
-		}		
-/*
-*       6. Trnsmit 10 messages to the server and 
-*       receive an ackknowledge from the server each time.
-*/
-		if( ! transferFileName())
-		{
-			return 0;
-		}
-
-
-        close(sock2);
-        puts("End of client program");
-        return 0;;        /* end of client program */
-}
-
-int iputFileName(){
+int inputFileName(){
 		printf("myftp> ");
 		if(scanf("put %s",local_filename) == EOF || scanf("%s",remote_filename) == EOF ){
 	   		 return 0 ;
-		}
+		}else
+			return 1;
 
 }
-int getConnction(){
+int getConnection(){
 		
 		/*      5. Try a connection with the server
 		*/
@@ -101,9 +76,10 @@ int getConnction(){
         {
                 perror("Error at connect time");
                 return 0;
-        }				
+        }else 
+			return 1;
 }
-int getSocketBase(){ 
+int getSocketBase(int argc , char *argv[]){ 
 
 /*
 *       1. Validation of the parameters read on the command line
@@ -148,11 +124,14 @@ int getSocketBase(){
         server2.sin_port = htons(atoi(argv[2]));  /* char port # ==>integer port #
                                                      ====> network 16 bits format */
         server2.sin_addr = * ((struct in_addr *) hpstruct.h_addr);
+		return 1;
 }
 int transferFileName(){
 
         if(write(sock2,local_filename ,strlen(DATA)) < 0)
 			return 0 ;
+		else
+			return 1 ;
 }
 int save(){
 
@@ -177,3 +156,33 @@ int save(){
                      }
          }
 }
+
+int main(int argc,char *argv[])
+
+{
+
+		if( !getSocketBase(argc,argv) ){
+			return 0 ;
+		}
+		
+		if( !getConnection() ){
+			return 0 ;
+		}
+		if( !inputFileName() ){
+			return 0 ;
+		}		
+/*
+*       6. Trnsmit 10 messages to the server and 
+*       receive an ackknowledge from the server each time.
+*/
+		if( !transferFileName())
+		{
+			return 0;
+		}
+
+
+        close(sock2);
+        puts("End of client program");
+        return 0;;        /* end of client program */
+}
+
