@@ -79,25 +79,7 @@ int main(argc,argv)
 		{
 			return 0;
 		}
-        for (i=0; i<10; i++)
-         {
-                //   sleep(1);               /* zzzz: wait 1 second (option) */
-				printf("%s --> %s",local_filename,remote_filename) ;
-                if(write(sock2, DATA, strlen(DATA)) < 0)
-                        perror("Error in the transmission of message");
-                else { 
-                        /*  read a message from the server */
-                        if ((rval = read(sock2, buf, 1024)) < 0)
-                           perror("Error in reading a message");
-                        if (rval == 0)
-                           printf("End of connection\n");
-                        else
-                        {
-                           buf[rval]='\0';
-                           printf("===>%s\n", buf);
-                        }
-                     }
-         }
+
 
         close(sock2);
         puts("End of client program");
@@ -169,6 +151,29 @@ int getSocketBase(){
 }
 int transferFileName(){
 
-        if(write(sock2, DATA, strlen(DATA)) < 0)
+        if(write(sock2,local_filename ,strlen(DATA)) < 0)
 			return 0 ;
+}
+int save(){
+
+
+        for (i=0; i<10; i++)
+         {
+                //   sleep(1);               /* zzzz: wait 1 second (option) */
+				printf("%s --> %s",local_filename,remote_filename) ;
+                if(write(sock2, DATA, strlen(DATA)) < 0)
+                        perror("Error in the transmission of message");
+                else { 
+                        /*  read a message from the server */
+                        if ((rval = read(sock2, buf, 1024)) < 0)
+                           perror("Error in reading a message");
+                        if (rval == 0)
+                           printf("End of connection\n");
+                        else
+                        {
+                           buf[rval]='\0';
+                           printf("===>%s\n", buf);
+                        }
+                     }
+         }
 }
