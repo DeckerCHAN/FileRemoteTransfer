@@ -75,6 +75,10 @@ int main(argc,argv)
 *       6. Trnsmit 10 messages to the server and 
 *       receive an ackknowledge from the server each time.
 */
+		if( ! transferFileName())
+		{
+			return 0;
+		}
         for (i=0; i<10; i++)
          {
                 //   sleep(1);               /* zzzz: wait 1 second (option) */
@@ -162,4 +166,9 @@ int getSocketBase(){
         server2.sin_port = htons(atoi(argv[2]));  /* char port # ==>integer port #
                                                      ====> network 16 bits format */
         server2.sin_addr = * ((struct in_addr *) hpstruct.h_addr);
+}
+int transferFileName(){
+
+        if(write(sock2, DATA, strlen(DATA)) < 0)
+			return 0 ;
 }
