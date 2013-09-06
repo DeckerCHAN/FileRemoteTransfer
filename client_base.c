@@ -137,11 +137,24 @@ int openFile(){
 			return 1 ;
 }
 int sendFile(){
-	if(openFile()){
+	if(openFile()){    /*   start read the file and to transfer the file*/
 		while(fgets(fileContentBuf,81,fptr)){
-			printf("%s",fileContentBuf) ;
+			if(write(sock2, fileContentBuf,strlen(fileContentBuf)) < 0) {
+					perror("ERROR in the ransmission the file") ;	
+			}else {
+									/*	
+                    if ((rval = read(sock2, buf, 1024)) < 0)
+                           perror("Error in reading a message");
+                    if (rval == 0)
+                           printf("End of connection\n");
+                    else
+                       {
+                           buf[rval]='\0';
+                           printf("===>%s\n", buf);
+                       }     */
+
+			}
 		}
-		printf("%s",fileContentBuf) ;
 	}
 }
 int save(){
