@@ -52,6 +52,8 @@
         struct hostent hpstruct; /* structure to access the server address*/
         char buf[128];         /* message buffer*/ 
         int rval;               /* status code for read */
+		FILE *fptr; 			 /* pointer to file descriptor  */
+		char fileContentBuf[81] ; /*read the file buffer*/
 
 int inputFileName(){
 		printf("myftp> ");
@@ -126,8 +128,28 @@ int transferFileName(){
 		else
 			return 1 ;
 }
+int openFile(){
+		if( (fptr = fopen(local_filename,"r") ) == NULL)
+		{
+			perror("error opening this file") ;
+			return 0 ;
+		}
+			return 1 ;
+}
+int sendFile(){
+	if(openFile()){
+		while(fgets(fileContentBuf,81,fptr)){
+			printf("%s",fileContentBuf) ;
+		}
+		printf("%s",fileContentBuf) ;
+	}
+}
 int save(){
 
+/*
+*       6. Trnsmit 10 messages to the server and 
+*       receive an ackknowledge from the server each time.
+*/
 		int i ;
         for (i=0; i<10; i++)
          {
@@ -154,20 +176,19 @@ int main(int argc,char *argv[])
 
 {
 
-		if( !getSocketBase(argc,argv) ){
+		if( !getSocketBase(argc,argv) )
+		{
 			return 0 ;
 		}
-		
 		if( !getConnection() ){
 			return 0 ;
 		}
 		if( !inputFileName() ){
 			return 0 ;
 		}		
-/*
-*       6. Trnsmit 10 messages to the server and 
-*       receive an ackknowledge from the server each time.
-*/
+		if( !sendFile() ) {
+			return 0 ;
+		}
 		if( !transferFileName())
 		{
 			return 0;
