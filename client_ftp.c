@@ -1,192 +1,190 @@
 /* 
- *	Program:        server_ftp.c 
- *	Author:         Jeffrey.nam  
- *	TUT_stuNumber 	20115877 
- *	Date:           Sept 2011 
+ *	Program:        client_base.c 
+ *	Author:         Jeffrey.nam   
+ *	TUT_NUMBER      20115877 
+ *	Date:           Sept 2013 
  *	
- *	Objective:      Show how to use a tcp socket  
- *	on a server program running on 
- *	Sun/Solaris ; after the connection, *                       this program receives a client message 
- *	and sends back an acknowledge each time. 
+ *	Objective:      Show how to use a tcp socket 
+ *	on a client program running on 
+ *	Sun/ Solaris ; this program transmits 
+ *	a message to a server and receives *                       an acknowledge each time.  A delay of 
+ *	one second is introduced between messages. 
  *	
- *	Options to compile and link on Solaris: 
- *	===>    gcc server_ftp.c -lsocket -o server_ftp 
- *	Options to compile and link on Linux: 
- *	===>    gcc server_ftp.c -o server_ftp 
+ *	Options to compile on Solaris:           *       ===>    gcc client_ftp.c -lsocket -lnsl -o client_ftp *       Options to compile on Linux:           
+ *	===>    gcc client_ftp.c -lrt -lnsl -o client_ftp 
  *	
- *	Execution:  server_base   5161  
+ *	Execution: 3 parameters: program_name server_name server port_number 
+ *	=========>  client_ftp server_machine 5161 
  *	
- *	Files to include 
+ *	
  */ 
-
-#include <errno.h> 
-#include <string.h> 
-#include <sys/types.h> 
-#include <sys/socket.h> 
+#include <errno.h>          
+#include <string.h>         
+#include <sys/types.h>      
+#include <sys/socket.h>     
 #include <netinet/in.h> 
-#include <netdb.h> 
-#include <sys/time.h>  
+#include <netdb.h>          
 #include <stdio.h> 
+#include <time.h> 
+
 
 /* 
- *	The following functions are used in this program 
+ *	following functions are used in this program 
  *	
- *	socket, bind, getsockname, listen,  
- *	accept, read, write, close. 
+ *	socket, gethostbyname, connect,  *               read, write, close. 
  */ 
 
-#define ACK "ACK" 
-#define NAK "NAK" 
+FILE *fptr;  	 	 	                                 /* pointer to file descriptor  */ 
+struct timespec time1 , time2 ,temp; /* time_t tv_sec ; seconds long tv_nsec ; nanoseconds */ 
+struct hostent *hp,*gethostbyname(); /* structure to associate the 
+                                        server name and its address */ 
+struct hostent hpstruct;                  /* structure to access the server address*/     
+struct sockaddr_in server2;            /* structure used to assign a name to a socket sccording internet format*/ 
+size_t length;                               /* #octets in structure sockadr_in */ 
 
-FILE *fptr ;  struct sockaddr_in server1;  /* structure used to assign a name 
-                                              to a socket sccording internet format*/ 
-int rval;                                      /* status code for read */  
-int writeNum = 0 ;                  /*Time to transfer file*/  
-int sizeNum = 0 ;  
-int sock1, msgsock;              /* socket descriptors */                 
-int addrlen, length;               /* Linux: #octets in the structure sockadr_in */     
-char buf[1000];                         /* buffer for transmission */ 
-char remote_filename[20] ; 
+char local_filename[20];                   /* save the local_file_name which is input by user  */  
+char remote_filename[20];             /* save the remote_file_name which is input bu user */  	 
+char fileContentBuf[10000] ;          /*read the file buffer*/  
+int file_line = 0 , file_size = 0 ;         /*file file_line file_size*/ 
+int sock2;                                              /* socket descriptor */  
+double delay ; 
 
-int getSocketBase(int argc , char *argv[]){ 
+
+int inputFileName(){  
+    printf("myftp> "); 
+    if(scanf("put %s",local_filename) == EOF || scanf("%s",remote_filename) == EOF )
+    { 
+        return 0 ; 
+    }else{ 
+        printf("\nftp command=> put  local file=> %s  remote file=> %s\n",local_filename,remote_filename); 
+        return 1; 
+    } 
+} 
+int getConnection(){ 
+
+    /*      5. Try a connection with the server 
+    */ 
+    printf("\n===================  Start   ======================\n") ; 
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID , &time1 ) ; /* read the time1 nanosec */        
+    if (connect(sock2, (struct sockaddr *)&server2, sizeof(server2)) < 0) 
+    {               
+        return 0; 
+    }   	else    	 	 
+        return 1; 
+
+} 
+int getSocketBase(int argc , char *argv[]){  
 
     /* 
-     *	1. Validation of the 2 parameters read on the command line 
-     */        
-    if (argc != 2)        
-    {   	 	 	
-        printf("Call the program this way : server_base port_number\n"); 
-        return 1; 
+     *	1. Validation of the parameters read on the command file_line 
+     */         if (argc != 3)    
+    {              
+        return 0; 
     } 
     /* 
      *	2. Socket creation parameters:           
-     *	- AF_INET is the internet format  *               - SOCK_STREAM specifies a TCP type socket 
-     *	- 0 specifies to use the default protocol. 
-     */        
-    sock1 = socket(AF_INET, SOCK_STREAM, 0);     
-    if (sock1 < 0)        
-    {                 
-        perror("Error in creating a TCP socket ");             
-        return 1; 
-    }  
-
-    /* 
-     *	3. Specify the local part of the address : 
-     *	1)the local port number in network format and 
-     *	2)the local IP address.  INADDR_ANY is used on a server 
-     *	because many ip addresses may be used on the same machine. 
-     *	
-     *	Client connections will be redirected to other temporary sockets. 
-     *	Use your own port number. 
-     */ 
-    server1.sin_family = AF_INET;           /* internet format       
-    */ 
-    server1.sin_addr.s_addr = INADDR_ANY;   
-    /* under-specified address    */    
-    server1.sin_port = htons(atoi(argv[1])); 
-
-    return 0 ; 
-} 
-int getBind(){ 
-
-    if (bind(sock1, (struct sockaddr *) &server1, sizeof(server1)) < 0) 
-    {               
-        return 1; 
-    }else   	 	 
-        return 0;
-} 
-int startListening(){ 
-
-    /* 
-     *	4. Simple validation: find the name associated to this socket 
-     *	and print its port number 
-     */        
-    length = sizeof(server1);      
-    if (getsockname(sock1, (struct sockaddr *)&server1, &length) < 0 ) 
-    {          
-        return 1; 
+     *	- AF_INET is the internet format  *               - SOCK_STREAM specifies a TCP type socket *               - 0 specifies to use the default protocol. 
+     */         sock2 = socket(AF_INET, SOCK_STREAM, 0);      
+    if (sock2 < 0)      
+    {                
+        perror("Error in creating a TCP socket");             
+        return 0; 
     } 
-    printf("The port number used by the tcp socket is #%d\n", ntohs(server1.sin_port)); 
-
+    /* 
+     *	3. Get a pointer to the network server address structure. 
+     *	The server name is taken from the command file_line (argv[1]): 
+     *	ex.  "sunens.uqac.ca" 
+     */         server2.sin_family = AF_INET;   /* internet format*/       
+    hp = gethostbyname(argv[1]);         
+    if (hp == 0)       
+    {              
+        fprintf(stderr, "%s: unknown host ===>", argv[1]);            
+        return 0; 
+    }        
+    hpstruct = *hp; /*  save  hostent data */ 
 
     /* 
-     *	5. Fix the maximum number of clients waiting connection and          leave the server in passive mode 
-     */              
-    listen(sock1, 5);    
-    puts("server ready for connection");   	
-    return 0 ; 
+     *	4. Fill in the remote address part 
+     */        
+    server2.sin_family = hpstruct.h_addrtype;      
+    server2.sin_port = htons(atoi(argv[2]));  /* char port # ==>integer port # 
+
+                                                 ====> network 16 bits format */ 
+    server2.sin_addr = * ((struct in_addr *) hpstruct.h_addr);   
+    return 1; 
+}
+int transferFileName(){     
+    if(write(sock2,local_filename ,strlen(local_filename)) < 0) 
+        return 0 ; 
+    else 
+        return 1 ; 
 } 
-void getClientMessage(){ 
+int openFile(){ 
 
-    /* 
-     *	6. Waiting for a client TCP connection 
-     *	
-     *	The second and third parameters are useless. *       A new temporary socket (msgsock) is created  
-     *	for each client connection (msgsock). 
-     */ 
-    do  
+    if( (fptr = fopen(local_filename,"r") ) == NULL) 
     { 
-
-        msgsock = accept(sock1, (struct sockaddr *) 0, NULL);   	
-        puts("\n===================  Start  ===================\n") ;   	
-        puts("Client connection");      
-        if (msgsock == -1 ) perror("accept");   
-        else do  
-        { 
-
-            /*       7. Client message is read in a 1K octets buffer. rval returns 
-             *	the number of octets received. 
-             */ 
-            writeNum ++ ;   	 	
-            if(writeNum == 1) 
-            { 
-                rval = read(msgsock, remote_filename, 800);   	 	 	
-                remote_filename[rval] = '\0' ;   	 	 	 
-                printf("Transfer File =====>%s\n",remote_filename) ;   	 	 
-                if((fptr = fopen(remote_filename,"a")) == NULL) 
-                { 
-                    perror("error opening this file"); 
-                } 
-            } 
-            rval = read(msgsock, buf, 800); 
-            if (rval <= 0)             { 
-                printf("End of client connection\t\tBy: 20115877_Zhang Yinan\n\n");  
-                puts("\n===================  END  ===================\n") ; 
-                close(msgsock) ; 
-                fclose(fptr) ;   
-                writeNum = 0 ;   	 
-                sizeNum = 0 ; 
-            } 	 
-            else /* Printing of message and transmission of the acknowledge */ 
-            { 
-                buf[rval]='\0';     /* insert the end of character string*/ 
-                fputs(buf,fptr) ;   	 	 	 	
-                sizeNum+=strlen(buf) ; 
-            } 
-        }  while(rval > 0);   /* read until EOF data available */ 
-
-    } while(1);          /* my server never stops */ 
+        perror("error opening this file") ; 
+        return 0 ; 
+    } 	   	 
+    return 1 ;  
 } 
+int sendFile(){  if(openFile()){    /*   start read the file and to transfer the file*/ 
+
+    if(write(sock2 ,remote_filename,strlen(remote_filename) ) < 0 )
+    {   	 	
+        perror("ERROR in ransmission the remote_filename") ; 
+        return 0 ; 
+
+    }
+    while(fgets(fileContentBuf,1000,fptr))
+    { 
+        file_line++ ; 
+        file_size+=strlen(fileContentBuf) ;   	 	 
+        if(write(sock2, fileContentBuf,strlen(fileContentBuf)) < 0)
+        {   	 	 	 	
+            perror("ERROR in the ransmission the file") ; 	 
+            return 0 ; 
+        } 
+    }   
+} 
+fclose(fptr) ;  return 1; 
+} 
+
 int main(int argc,char *argv[]) 
-
 { 
-    if( getSocketBase(argc,argv)) 
+    if( !getSocketBase(argc,argv) ) 
     { 
-        perror("Error in init Socket\n") ; 
-        return 1; 
+        perror("Call the program : client_base server_name port_number\n"); 
+        return 0 ; 
     } 
-    if( getBind()) 
+    if( !getConnection() ){         
+        perror("Error at connect time\n"); 
+        return 0 ; 
+    } 
+    if( !inputFileName() ){ 
+        perror("error input format : put  location_file_name  remote_file_name\n") ; 
+        return 0 ; 
+    } 	 	 
+    if( !sendFile() ) {   	 	 
+        perror("ERROR in ransmission the File\n") ; 
+        return 0 ; 
+    } 
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time2) ; /*read the timer2 in nanosec */   	
+    if((time2.tv_nsec - time1.tv_nsec) < 0) 
     { 
-        perror(" The function bind did not work properly\n"); 
-        return 1; 
+        temp.tv_sec = time2.tv_sec - time1.tv_sec - 1 ;   	 	 
+        temp.tv_nsec = 1000000000 + time2.tv_nsec - time1.tv_nsec ; 
+    }else{ 
+        temp.tv_sec = time2.tv_sec - time1.tv_sec ;  	 	 
+        temp.tv_nsec = time2.tv_nsec - time1.tv_nsec ; 
     } 
-    if( startListening()) 
-    { 
-        perror("Error in getsockname()\n"); 
-        return 1; 
-    } 
-    getClientMessage();   	
-    close(sock1);      
-    return 0; 
-}    
-/* end of server program  */ 
+    delay = (double) (temp.tv_sec * 1000000 ) + (temp.tv_nsec/1000) ;           /* delay in microsec */   	
+    delay = (double) delay/1000 ; 
+    printf("\nFile %s had %d file_lines and a total of %d octets\n",local_filename,file_line , file_size) ; 
+    printf("Transfer rate : %9.3f MO/sec \t Transfer delay:%9.3f msec\n",(double)((file_size*0.9765)/(1024*delay)) ,delay) ;      
+    close(sock2);   	
+    puts("\nEnd of client program\t\tBy: 20115877_Zhang Yinan\n");   	
+    printf("\n===================  END   ======================\n\n") ; 
+    return 0;        /* end of client program */ 
+} 
