@@ -1,7 +1,7 @@
 /* 
  *	Program:        client_base.c 
- *	Author:         Jeffrey.nam   
- *	TUT_NUMBER      20115877 
+ *	Author:         Tianyu Song
+ *	TUT_NUMBER      20126169 
  *	Date:           Sept 2013 
  *	
  *	Objective:      Show how to use a tcp socket 
@@ -184,7 +184,7 @@ int main(int argc,char *argv[])
     printf("\nFile %s had %d file_lines and a total of %d octets\n",local_filename,file_line , file_size) ; 
     printf("Transfer rate : %9.3f MO/sec \t Transfer delay:%9.3f msec\n",(double)((file_size*0.9765)/(1024*delay)) ,delay) ;      
     close(sock2);   	
-    puts("\nEnd of client program\t\tBy: 20115877_Zhang Yinan\n");   	
-    printf("\n===================  END   ======================\n\n") ; 
+    puts("\nEnd of client program\t\tBy: 20126169_Tianyu Song\n");   	
+    printf("\n===================  Done   ======================\n\n") ; 
     return 0;        /* end of client program */ 
 } 

@@ -1,7 +1,7 @@
 /* 
  *	Program:        server_ftp.c 
- *	Author:         Jeffrey.nam  
- *	TUT_stuNumber 	20115877 
+ *	Author:         Tianyu Song
+ *	TUT_stuNumber 	20126169 
  *	Date:           Sept 2011 
  *	
  *	Objective:      Show how to use a tcp socket  
@@ -150,8 +150,8 @@ void getClientMessage(){
             } 
             rval = read(msgsock, buf, 800); 
             if (rval <= 0)             { 
-                printf("End of client connection\t\tBy: 20115877_Zhang Yinan\n\n");  
-                puts("\n===================  END  ===================\n") ; 
+                printf("End of client connection\t\tBy: 20126169 Tianyu Song\n\n");  
+                puts("\n===================  Done  ===================\n") ; 
                 close(msgsock) ; 
                 fclose(fptr) ;   
                 writeNum = 0 ;   	 
